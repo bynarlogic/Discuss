@@ -4,6 +4,7 @@ defmodule Discuss.TopicController do
   alias Discuss.Topic
 
   plug Discuss.Plugs.RequireAuth when action in [:new, :edit, :update, :delete, :create]
+  plug :check_topic_owner when action in [:update, :edit, :delete]
 
   def new(conn,params) do
     changeset = Topic.changeset(%Topic{}, %{})
@@ -41,7 +42,11 @@ defmodule Discuss.TopicController do
   end
 
   def create(conn, %{"topic" => topic}) do
-    changeset = Topic.changeset(%Topic{}, topic)
+
+    changeset = conn.assigns.user
+      |> build_assoc(:topics)
+      |> Topic.changeset(topic)
+
     case Repo.insert(changeset) do
       {:ok, _topic} ->
         conn
@@ -57,6 +62,19 @@ defmodule Discuss.TopicController do
   def index(conn, _params) do
     topics = Repo.all(Topic)
     render conn, "index.html", topics: topics
+  end
+
+  def check_topic_owner(conn, _params) do
+    %{params: %{"id" => topic_id}}= conn
+    if Repo.get(Topic, topic_id).user_id == conn.assigns.user.id do
+      conn
+    else
+      conn
+      |> put_flash(:error, "User does not have write access to this topic")
+      |> redirect(to: topic_path(conn,:index))
+      |> halt()
+    end
+
   end
 
 end
