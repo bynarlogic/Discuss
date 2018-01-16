@@ -1,3 +1,20 @@
-<h4>
+<h5>
 <%= @topic.title %>
-</h4>
+</h5>
+
+<textarea class="materialize-textarea"></textarea>
+<button class="btn">Add Comment</button>
+
+<ul class="collection">
+
+</ul>
+
+
+
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function(){
+    window.createSocket(<%= @topic.id %>)
+  });
+</script>
